@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">RetailStore</string>
+    <string name="action_settings">Settings</string>
+    <string name="activity_title">Inmar Retail</string>
+    <string name="loading">Loading...</string>
+    <string name="sku">SKU</string>
+    <string name="location">Location</string>
+    <string name="dept">Dept</string>
+    <string name="category">Category</string>
+    <string name="sub_category">Sub-category</string>
+</resources>
