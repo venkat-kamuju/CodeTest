@@ -32,11 +32,10 @@ $app->post('/insert_sku',
         //Prepare output to return to the caller
         $response = array();
 
-        //Read input params from HTTP request
-        $data = json_decode($app->request->getBody());
-        $sku_name = $data->sku_name;
-        $location_id = $data->location_id;
-        $meta_info_id = $data->meta_info_id;
+        $sku_name = $app->request()->params('sku_name');
+        $location_id = $app->request()->params('location_id');
+        $meta_info_id = $app->request()->params('meta_info_id');
+
 
         //Create instance of Database helper
         $db = new DbHandler();
@@ -176,6 +175,97 @@ $app->delete('/delete_sku/:sku_id',
 
         echoRespnse(Constants::HTTP_OK, $response);
     });
+
+
+/**
+ * Fetch all locations.
+ * method GET
+ * url /get_locations
+ * return - JSON array with locations
+ */
+$app->get('/get_locations',
+    function () use ($app)  {
+
+        //Prepare a result array
+        $response = array();
+
+        //Create instance of database helper
+        $db = new DbHandler();
+
+        //Fetch SKU from database
+        $result = $db->getLocations();
+
+        if (!is_null($result)) {
+
+            $response[RESULT_CODE_KEY] = RESULT_CODE_SUCCESS;
+
+            $response["location"] = array();
+
+            // looping through result and preparing sku array
+            while ($location = $result->fetch_assoc()) {
+                $location_item = array();
+                $location_item["location_id"] = $location["location_id"];
+                $location_item["location_name"] = $location["location_name"];
+                array_push($response["location"], $location_item);
+            }
+
+        } else {
+
+            $response[RESULT_CODE_KEY] = RESULT_CODE_FAILURE;
+
+        }
+
+        echoRespnse(Constants::HTTP_OK, $response);
+    }
+);
+
+
+/**
+ * Fetch metadatalike department, category and sub-category.
+ * method GET
+ * url /get_metadata
+ * return - JSON array with meta data
+ */
+$app->get('/get_metadata',
+    function () use ($app)  {
+
+        //Prepare a result array
+        $response = array();
+
+        //Create instance of database helper
+        $db = new DbHandler();
+
+        //Fetch SKU from database
+        $result = $db->getMetadata();
+
+        if (!is_null($result)) {
+
+            $response[RESULT_CODE_KEY] = RESULT_CODE_SUCCESS;
+
+            $response["metadata"] = array();
+
+            // looping through result and preparing sku array
+            while ($metadata = $result->fetch_assoc()) {
+                $metadata_item = array();
+                $metadata_item["dept_id"] = $metadata["dept_id"];
+                $metadata_item["dept_name"] = $metadata["dept_name"];
+                $metadata_item["category_id"] = $metadata["category_id"];
+                $metadata_item["category_name"] = $metadata["category_name"];
+                $metadata_item["sub_category_id"] = $metadata["sub_category_id"];
+                $metadata_item["sub_category_name"] = $metadata["sub_category_name"];
+                array_push($response["metadata"], $metadata_item);
+            }
+
+        } else {
+
+            $response[RESULT_CODE_KEY] = RESULT_CODE_FAILURE;
+
+        }
+
+        echoRespnse(Constants::HTTP_OK, $response);
+    }
+);
+
 
 /**
  * Echoing json response to client

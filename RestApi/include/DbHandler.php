@@ -63,7 +63,7 @@ class DbHandler {
     }
 
     /**
-     * Fetching SKU List by location
+     * Fetch SKU for the supplied arguments
      * @param String $location Location name
      * @param String $dept Department name
      * @param String $category Item category name
@@ -82,7 +82,8 @@ class DbHandler {
             WHERE sku.location_id = locations.location_id
             AND sku.meta_info_id = sub_categories.sub_category_id
             AND sub_categories.category_id = categories.category_id
-            AND categories.dept_id = departments.dept_id ";
+            AND categories.dept_id = departments.dept_id 
+            ORDER BY sku.sku_id";
 
         //Append additional clauses to sql query if specific records needs to be fetched.
         if (!is_null($location)) {
@@ -238,6 +239,79 @@ class DbHandler {
 
         //Return true if record exist.
         return $num_rows > 0;
+    }
+
+
+    /**
+     * Fetching Location List
+     * @param String $location Location name
+     * @param String $dept Department name
+     * @param String $category Item category name
+     * @param String $sub_category Item sub-category name
+     * @return list of sku if available, null otherwise
+     */
+    public function getLocations() {
+
+        //Default SQL query to fetch all locations
+        $sql_query = "SELECT location_id, location_name FROM locations";
+
+        if (!$this->conn) {
+            return null;
+        }
+
+        //Prepare SQL statement
+        $stmt = $this->conn->prepare($sql_query);
+        if ( false === $stmt ) {
+            return null;
+        }
+
+        //Execute SQL Query
+        $result = $stmt->execute();
+
+        //Save result set
+        $location_array = $stmt->get_result();
+
+        $stmt->close();
+
+        //Return results
+        return $location_array;
+    }
+
+    /**
+     * Fetch meta data
+     * @return list of meta data
+     */
+    public function getMetadata() {
+
+        //Default SQL query to fetch all sku
+        $sql_query = "SELECT departments.dept_id, departments.dept_name,
+            categories.category_id, categories.category_name,
+            sub_categories.sub_category_id, sub_categories.sub_category_name
+            FROM sub_categories, categories, departments
+            WHERE sub_categories.category_id = categories.category_id
+            AND categories.dept_id = departments.dept_id 
+            ORDER BY departments.dept_id, categories.category_id, sub_categories.sub_category_id";
+
+        if (!$this->conn) {
+            return null;
+        }
+
+        //Prepare SQL statement
+        $stmt = $this->conn->prepare($sql_query);
+        if ( false === $stmt ) {
+            return null;
+        }
+
+        //Execute SQL Query
+        $result = $stmt->execute();
+
+        //Save result set
+        $metadata_array = $stmt->get_result();
+
+        $stmt->close();
+
+        //Return results
+        return $metadata_array;
     }
 
 }
