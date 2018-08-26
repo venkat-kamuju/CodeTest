@@ -1,20 +1,34 @@
-package com.inmar.retailstore;
+package com.inmar.retailstore.model;
 
 import android.util.Log;
 
 import java.util.Locale;
 
+/**
+ * Container class for holding SKU info
+ */
 public class SKU {
+
     private static final String TAG = "SKU";
+
     public int skuId;
+
     public String skuDescription;
+
     public int locationId;
+
     public String locationName;
+
     public int deptId;
+
     public String deptName;
+
     public int categoryId;
+
     public String categoryName;
+
     public int subCategoryId;
+
     public String subCategoryName;
 
     public SKU(int skuId, String skuDescription, int locationId, String locationName,
@@ -57,7 +71,6 @@ public class SKU {
                 "Category Id: %d, Category Name:%s, Sub Category Id: %d, Sub Category Name:%s",
                 skuId, skuDescription, locationId, locationName, deptId, deptName,
                 categoryId, categoryName, subCategoryId, subCategoryName);
-        //Log.i(TAG, str);
         return str;
     }
 }

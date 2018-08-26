@@ -1,15 +1,16 @@
 package com.inmar.retailstore;
 
-import android.app.ProgressDialog;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.JsonReader;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -18,72 +19,61 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import com.inmar.retailstore.adapter.SkuListViewAdapter;
+import com.inmar.retailstore.common.Constants;
+import com.inmar.retailstore.common.Util;
+import com.inmar.retailstore.model.SKU;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Activity class to show list of SKU.
+ */
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "RestActivity";
 
-    ProgressDialog progress;
-
+    //Connectivity Manager to check network status
     ConnectivityManager mConnMgr;
 
+    //Listview for SKU items
     private ListView mLvSku;
+
+    //List to maintain SKU info
     private ArrayList<SKU> mSkuList;
+
+    //Adapter for SKU list
     private SkuListViewAdapter mSkuListAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_main);
+
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
         mConnMgr = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
 
-        mSkuList = new ArrayList<SKU>();
         mLvSku = (ListView) findViewById(R.id.lv_sku);
         mLvSku.setOnItemLongClickListener(mOnSkuItemLongClickListener);
+        mSkuList = new ArrayList<SKU>();
 
+        //Floating Plus (+) button. Add SKU activity is launched on tapping it.
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                Intent intent = new Intent(MainActivity.this, InsertSkuActivity.class);
+                startActivity(intent);
             }
         });
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-
-        int id = item.getItemId();
-
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
     }
 
     @Override
@@ -92,25 +82,88 @@ public class MainActivity extends AppCompatActivity {
         getContent();
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        if (id == R.id.action_settings) {
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    /**
+     * Listener for long click of SKU item.
+     * An alert is populated to delete the selected item.
+     */
     private AdapterView.OnItemLongClickListener mOnSkuItemLongClickListener
             = new AdapterView.OnItemLongClickListener() {
         @Override
         public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-            Toast.makeText(MainActivity.this,
-                    "SKU: " + mSkuList.get(position).skuDescription, Toast.LENGTH_SHORT)
-                    .show();
+            if (mSkuList != null && mSkuList.size() >= position) {
+                deleteSKU(mSkuList.get(position).skuId, mSkuList.get(position).skuDescription);
+            } else {
+                Log.e(TAG, "SKU info not found, internal error");
+            }
             return false;
         }
     };
 
-    private void getContent() {
+    /**
+     * Show alert dialog to confirm deleting SKU
+     * @param skuId
+     * @param skuDesc
+     */
+    private void deleteSKU(final int skuId, final String skuDesc) {
 
-        new RestTask().execute();
-        //progress = ProgressDialog.show(this, "Getting Data ...", "Waiting For Results...", true);
-/*
+        AlertDialog.Builder alert = new AlertDialog.Builder(this);
+        alert.setTitle(R.string.delete_sku);
+        alert.setMessage(getString(R.string.delete_sku_message, skuDesc));
+        alert.setIcon(android.R.drawable.stat_sys_warning);
+        alert.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int whichButton) {
+                deleteSKU(skuId);
+            }
+        });
+        alert.setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int whichButton) {
+                dialog.cancel();
+            }
+        });
+
+        AlertDialog alertDialog = alert.create();
+        alertDialog.show();
+
+    }
+
+    /**
+     * Execute asynchronous task to fetch SKU list from Server
+     */
+    private void getContent() {
+        new FetchSkuTask().execute();
+    }
+
+    /**
+     * Execute asynchronous task to delete selected SKU in Server
+     * @param skuId
+     */
+    private void deleteSKU(int skuId) {
+        new DeleteSkuTask().execute(skuId);
+    }
+
+    /**
+     * Check network connection state
+     * @return true if connected, popup a dialog if not.
+     */
+    private boolean isConnected() {
         NetworkInfo networkInfo = mConnMgr.getActiveNetworkInfo();
         if (networkInfo != null && networkInfo.isConnected()) {
-            new RestTask().execute();
+            return true;
         } else {
             AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
             builder.setTitle("Alert!");
@@ -123,59 +176,24 @@ public class MainActivity extends AppCompatActivity {
                         }
                     });
             builder.create().show();
+            return false;
         }
-*/
+    };
 
-    }
-
-    class RestTask extends AsyncTask<Void, Void, List<SKU>> {
+    /**
+     * Asynchronous task to fetch SKU list from Server
+     */
+    class FetchSkuTask extends AsyncTask<Void, Void, List<SKU>> {
 
         @Override
         protected List<SKU> doInBackground(Void... voids) {
 
-            List<SKU> skuList = null;
+            String url_locations = "http://192.168.43.45/retail_store/v1/get_sku";
 
-            try {
-                URL url = new URL("http://192.168.43.45/retail_store/v1/sku");
+            String responseData = Util.getServerData(url_locations);
 
-                // Create connection
-                HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
-
-                //httpURLConnection.setRequestMethod("GET");
-
-                if (httpURLConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
-
-                    InputStream responseBody = httpURLConnection.getInputStream();
-
-                    String responseData = getStringFromInputStream(responseBody);
-                    //Log.i(TAG, "Server Response:" + responseData);
-
-                    skuList = parseSKUData(responseData);
-
-                    /*
-                    InputStreamReader responseBodyReader =
-                            new InputStreamReader(responseBody, "UTF-8");
-
-                    JsonReader jsonReader = new JsonReader(responseBodyReader);
-                    jsonReader.beginObject(); // Start processing the JSON object
-                    while (jsonReader.hasNext()) { // Loop through all keys
-                        //String key = jsonReader.nextName(); // Fetch the next key
-                        //String value = jsonReader.nextString();
-                        Log.i(TAG, "JSON");
-                    }
-                    jsonReader.close();
-                    */
-                } else {
-                    Log.e(TAG, "Failed establishing HTTP connection");
-                }
-
-                httpURLConnection.disconnect();
-
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            List<SKU> skuList = parseSKUData(responseData);
+            Log.i(TAG, "SKU count:" + skuList.size());
 
             return skuList;
         }
@@ -195,45 +213,53 @@ public class MainActivity extends AppCompatActivity {
             mSkuListAdapter = new SkuListViewAdapter(MainActivity.this, mSkuList);
             mLvSku.setAdapter(mSkuListAdapter);
 
-            //mSkuListAdapter.updateList(mSkuList);
             mSkuListAdapter.notifyDataSetChanged();
         }
-
     }
 
-    // convert InputStream to String
-    private static String getStringFromInputStream(InputStream is) {
+    /**
+     * Asynchronous task to delete selected SKU in Server
+     */
+    class DeleteSkuTask extends AsyncTask<Integer, Void, Boolean> {
 
-        BufferedReader br = null;
-        StringBuilder sb = new StringBuilder();
+        @Override
+        protected Boolean doInBackground(Integer... sku_id) {
 
-        String line;
-        try {
+            String deleteUrl = "http://192.168.43.45/retail_store/v1/delete_sku/" + sku_id[0] ;
 
-            br = new BufferedReader(new InputStreamReader(is));
-            while ((line = br.readLine()) != null) {
-                sb.append(line);
-            }
+            String responseData = Util.deleteServerData(deleteUrl);
 
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (br != null) {
-                try {
-                    br.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+            return parseDeleteSkuResponse(responseData);
+
+        }
+
+        @Override
+        protected void onPostExecute(Boolean result) {
+            super.onPostExecute(result);
+            Log.i(TAG, "Task:onPostExecute");
+            if (result) {
+                Toast.makeText(MainActivity.this, R.string.sku_deleted, Toast.LENGTH_SHORT).show();
+                getContent();
+            } else {
+                Log.e(TAG, "Failed to delete SKU");
             }
         }
 
-        return sb.toString();
-
     }
 
+    /**
+     * Parse SKU list from JSON to Java list.
+     * @param jString
+     * @return
+     */
     private List<SKU> parseSKUData(String jString){
 
         Log.i(TAG, "parseSKUData");
+
+        if(jString == null || jString.isEmpty()) {
+            Log.e(TAG, "Invalid input");
+            return null;
+        }
 
         List<SKU> skuList = new ArrayList<SKU>();
         try {
@@ -242,9 +268,9 @@ public class MainActivity extends AppCompatActivity {
                 return null;
             }
 
-            String error = jObj.getString(Constants.JSON_KEY_RESULT);
-            if (error != null && !error.isEmpty()) {
-                Log.i(TAG, "Error:" + Boolean.parseBoolean(error));
+            String resultCode = jObj.getString(Constants.JSON_KEY_RESULT);
+            if (resultCode != null && !resultCode.isEmpty()) {
+                Log.i(TAG, "ResultCode:" + resultCode);
             }
 
             JSONArray items = jObj.getJSONArray(Constants.JSON_KEY_SKU);
@@ -257,24 +283,22 @@ public class MainActivity extends AppCompatActivity {
 
             for (int i = 0; i < items.length(); i++) {
 
-                //String title = items.getJSONObject(i).getJSONObject("volumeInfo").getString("title");
-
                 String skuId = items.getJSONObject(i).getString(Constants.JSON_KEY_SKU_ID);
                 String skuName = items.getJSONObject(i).getString(Constants.JSON_KEY_SKU_DESC);
 
-                //String locationId = items.getJSONObject(i).getString(Constants.JSON_KEY_LOCATION_ID);
+                String locationId = items.getJSONObject(i).getString(Constants.JSON_KEY_LOCATION_ID);
                 String locationName = items.getJSONObject(i).getString(Constants.JSON_KEY_LOCATION_NAME);
 
-                //String deptId = items.getJSONObject(i).getString(Constants.JSON_KEY_DEPT_ID);
+                String deptId = items.getJSONObject(i).getString(Constants.JSON_KEY_DEPT_ID);
                 String deptName = items.getJSONObject(i).getString(Constants.JSON_KEY_DEPT_NAME);
 
-                //String categoryId = items.getJSONObject(i).getString(Constants.JSON_KEY_CATEGORY_ID);
+                String categoryId = items.getJSONObject(i).getString(Constants.JSON_KEY_CATEGORY_ID);
                 String categoryName = items.getJSONObject(i).getString(Constants.JSON_KEY_CATEGORY_NAME);
 
-                //String subCategoryId = items.getJSONObject(i).getString(Constants.JSON_KEY_SUB_CATEGORY_ID);
+                String subCategoryId = items.getJSONObject(i).getString(Constants.JSON_KEY_SUB_CATEGORY_ID);
                 String subCategoryName = items.getJSONObject(i).getString(Constants.JSON_KEY_SUB_CATEGORY_NAME);
 
-                SKU sku = new SKU(skuId, skuName, "0", locationName, deptName, categoryName, subCategoryName);
+                SKU sku = new SKU(skuId, skuName, locationId, locationName, deptName, categoryName, subCategoryName);
                 skuList.add(sku);
             }
 
@@ -286,5 +310,38 @@ public class MainActivity extends AppCompatActivity {
         Log.i(TAG, "parseSKUData: sku count:" + skuList.size());
 
         return skuList;
+    }
+
+    /**
+     * Parse JSON response received on deleting SKU and check for the result.
+     * @param responseData
+     * @return
+     */
+    private boolean parseDeleteSkuResponse(String responseData) {
+        Log.i(TAG, "parseDeleteSkuResponse");
+
+        boolean result = false;
+
+        if(responseData == null || responseData.isEmpty()) {
+            Log.e(TAG, "Invalid response");
+            return result;
+        }
+
+        try {
+            JSONObject jObj = new JSONObject(responseData);
+            if (jObj == null || jObj.length() == 0) {
+                return result;
+            }
+
+            String resultCode = jObj.getString(Constants.JSON_KEY_RESULT);
+            if (resultCode != null && !resultCode.isEmpty()) {
+                Log.i(TAG, "ResultCode:" + resultCode);
+                result = (Integer.parseInt(resultCode) == Constants.RESULT_CODE_SUCCESS);
+            }
+        } catch (JSONException e) {
+            Log.e("DeleteSku", "unexpected JSON exception", e);
+        }
+
+        return result;
     }
 }
