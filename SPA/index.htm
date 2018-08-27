@@ -1,0 +1,153 @@
+<!DOCTYPE>
+<html ng-app="spaApp">
+
+<head>
+
+    <title>Inmar Contacts</title>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.13/angular.js"></script>
+
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"  ></script>  
+
+    <script type="text/javascript" src="https://netdna.bootstrapcdn.com/bootstrap/3.0.2/js/bootstrap.min.js" ></script>   
+
+    <script type="text/javascript" src="js/main.js"></script>
+
+    <link rel="stylesheet" id="themeStyles" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css"/> 
+
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css"/>
+
+    <link href="css/main.css" rel="stylesheet"/>
+
+    <script type="text/javascript">
+        var textbox1 = "";
+        var textbox2 = "";
+        var textbox3 = "";
+
+        function saveTextBoxes() {
+            textbox1 = $("#textbox1").val();
+            textbox2 = $("#textbox2").val();
+            textbox3 = $("#textbox3").val();
+            $('#myModal').modal('toggle');
+        }
+
+        function alertSavedValues() {
+            alert("Do you wish to delete selected contact?");
+        }
+
+    </script>
+
+
+</head>
+
+<body >
+
+    <h3>External Contacts</h3>
+
+    <p>Select the client contacts associated with the offer.</p>
+
+    <div class="w3-right">
+        <button data-toggle="collapse" data-target="#contacts_table">Collapse</button>&nbsp;
+    </div>
+
+    <br><br>
+    <div id="contacts_table" class="collapse in w3-center" ng-controller="ContactsController" >
+        <br><br>
+
+        <!-- Table with list of contacts -->
+        <table align="center" class="w3-table w3-striped w3-border" style="width:90%" >
+            <!-- Table Header -->
+            <tr class="w3-blue">
+                <th></th>
+                <th>Type</th>
+                <th>Name</th>
+                <th>Title</th>
+                <th>Phone</th>
+                <th>Email</th>
+            </tr>
+
+            <!-- Table rows populated with contacts fetched from server -->
+            <tr ng-repeat="contact in ContactDetails">
+                <td> <input type="checkbox" value={{contact.Id}} /></td>
+                <td>{{contact.Type}}</td>
+                <td>{{contact.Name}}</td>
+                <td>{{contact.Title}}</td>
+                <td>{{contact.Phone}}</td>
+                <td>{{contact.Email}}</td>
+            </tr>
+        </table>
+
+        <br>
+
+        <!-- Select & Delete Buttons-->
+        <div class="w3-center">
+            <button type="button" name="select" class="w3-button w3-round-large w3-blue" 
+                    style="width:30%">Select</button>
+            <button type="button"  class="w3-button w3-round-large w3-blue" 
+                    style="width:30%" onclick="alertSavedValues()">Delete</button>
+        </div>
+
+        <!-- Add Contact (+) button-->
+        <div class="w3-right">            
+            <button class="w3-button w3-blue" data-toggle="modal" data-target="#myModal">+</button>&nbsp;
+        </div>
+
+    </div>
+
+    <!-- Modal to insert new contact -->
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+
+        <div class="modal-dialog">
+
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title" id="myModalLabel">Add Contact</h4>
+                </div>
+
+                <div class="modal-body">
+
+                    <table align="center" class="w3-table">
+
+                        <tr>
+                            <td>Type:</td>
+                            <td> 
+                                <select>
+                                  <option value="1">Official</option>
+                                  <option value="2">Personal</option>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Name:</td>
+                            <td><input type="textbox" id="textbox2"></td>
+                        </tr>
+                        <tr>
+                            <td>Title:</td>
+                            <td><input type="textbox" id="textbox3"></td>
+                        </tr>
+                        <tr>
+                            <td>Phone:</td>
+                            <td><input type="textbox" id="textbox4"></td>
+                        </tr>
+                        <tr>
+                            <td>E-mail:</td>
+                            <td><input type="textbox" id="textbox5"></td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="saveTextBoxes()">Save changes</button>
+                </div>
+
+            </div><!-- /.modal-content -->
+
+        </div><!-- /.modal-dialog -->
+
+    </div><!-- /.modal -->
+
+</body>
+</html>
