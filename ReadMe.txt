@@ -43,12 +43,12 @@ Server      : Apache Server
         b) Install latest Android SDK API:
             Goto extracted folder and run the following batch: 
             c:\android\tools\bin>sdkmanager.bat  "platform-tools" "platforms;android-28"
+        C) Install Java JDK
             http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html
 
     ii) Android Studio IDE (For Development of Android)
         All components required for Android are bundled into Android Studio. It is available @ 
         https://developer.android.com/studio/
-        
 
     iii) Building Android App
         a) Open a terminal and change to the source of Android app
