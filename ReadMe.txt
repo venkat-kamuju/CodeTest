@@ -43,11 +43,23 @@ Server      : Apache Server
         b) Install latest Android SDK API:
             Goto extracted folder and run the following batch: 
             c:\android\tools\bin>sdkmanager.bat  "platform-tools" "platforms;android-28"
+            http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html
 
     ii) Android Studio IDE (For Development of Android)
         All components required for Android are bundled into Android Studio. It is available @ 
         https://developer.android.com/studio/
         
+
+    iii) Building Android App
+        a) Open a terminal and change to the source of Android app
+        b) Set environment variable
+            > cd C:\CodeTest-master\AndroidApp\RetailStore\
+            > set ANDROID_HOME=D:\android-sdk
+        c) Build the app
+            > gradlew assembleDebug
+        d) Android apk is generated in build folder
+            > C:\CodeTest-master\AndroidApp\RetailStore\app\build\outputs\apk
+    
 3. Deploying CodeTest project
 =====================================================
 3.1) Download Project Source
@@ -89,4 +101,10 @@ Server      : Apache Server
     iv) After installation a new app with label "Inmar Retail" appear on phone.
     
     v) Run the app and check Rest API calls
+
+3.5) Single Page Application
+    i) HTML based SPA is present in following location:
+        C:\CodeTest-master\SPA
     
+    ii) Open index.html in browser to run it
+
