@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+    <head>
+
+        <title>Inmar Contacts</title>
+
+        <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.7/angular.min.js"></script>
+
+        <script type="text/javascript" src="js/app.js"></script>
+
+        <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"  ></script>  
+
+        <script type="text/javascript" src="https://netdna.bootstrapcdn.com/bootstrap/3.0.2/js/bootstrap.min.js" ></script>   
+
+        <script type="text/javascript" src="js/main.js"></script>
+
+        <link rel="stylesheet" id="themeStyles" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css"/> 
+
+        <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css"/>
+
+    </head>
+
+<body>
+
+    <h3>External Contacts</h3>
+
+    <p>Select the client contacts associated with the offer.</p>
+
+    <div class="w3-right">
+        <button class="w3-button w3-blue" data-toggle="collapse" data-target="#contacts_table">-</button>&nbsp;
+    </div>
+
+    <br><br>
+
+    <div id="contacts_table" class="collapse in w3-center" ng-app="spaApp" ng-controller="contactsController" >
+
+    <br><br>
+
+        <!-- Table with list of contacts -->
+        <table align="center" class="w3-table w3-striped w3-border" style="width:90%" >
+            <!-- Table Header -->
+            <tr class="w3-blue">
+                <th></th>
+                <th>Type</th>
+                <th>Name</th>
+                <th>Title</th>
+                <th>Phone</th>
+                <th>Email</th>
+            </tr>
+
+            <!-- Table rows populated with contacts fetched from server -->
+            <tr ng-repeat="contact in contacts">
+                <td> <input type="checkbox" id="chkContact{{contact.Id}}"  ng-model="contact.Selected"/></td>
+                <td>{{contact.Type}}</td>
+                <td>{{contact.Name}}</td>
+                <td>{{contact.Title}}</td>
+                <td>{{contact.Phone}}</td>
+                <td>{{contact.Email}}</td>
+            </tr>
+        </table>
+
+        <br>
+
+        <div class="w3-center">
+            <button type="button" name="select" 
+                    class="w3-button w3-round-large w3-blue" style="width:30%" 
+                    ng-click="getSelectedContacts('Selected contacts...')" >Select</button>
+
+            <button type="button"  class="w3-button w3-round-large w3-blue" 
+                    style="width:30%" ng-click="getSelectedContacts('Contacts to delete...')" >Delete</button>
+
+            <button type="button"  class="w3-button w3-round-large w3-blue" 
+                    style="width:30%" data-toggle="modal" data-target="#myModal">Add New</button>
+        </div>
+        <span style="color:Red">{{contact_ids}}</span>
+
+    </div>
+
+
+    <!-- Modal to insert new contact -->
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+
+        <div class="modal-dialog">
+
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title" id="myModalLabel">Add Contact</h4>
+                </div>
+
+                <div class="modal-body">
+                    <form name="add_contact_form">
+                        <table align="center" class="w3-table">
+
+                            <tr>
+                                <td>Type:</td>
+                                <td> 
+                                    <select>
+                                      <option value="1">Official</option>
+                                      <option value="2">Personal</option>
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Name:</td>
+                                <td><input type="text" id="name" required></td>
+                            </tr>
+                            <tr>
+                                <td>Title:</td>
+                                <td><input type="text" id="title" required></td>
+                            </tr>
+                            <tr>
+                                <td>Phone:</td>
+                                <td><input id="phone" type="text" required></td>
+                            </tr>
+                            <tr>
+                                <td>E-mail:</td>
+                                <td><input type="email" id="emailId" name="email" ng-model="email" required></td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal" style="width:20%">Close</button>
+                        <button type="submit" type="submit" class="btn btn-primary" style="width:20%">Add</button>
+                    </div>
+                
+                </form>
+
+            </div><!-- /.modal-content -->
+
+        </div><!-- /.modal-dialog -->
+
+    </div><!-- /.modal -->
+</body>
+</html>
