@@ -1,3 +1,10 @@
+Repository contains a full stack software for REST API. And a mock Single Page Application.
+Contents:
+CodeTest\RestApi        REST API implementation
+CodeTest\RestApi\db     Database for REST API
+CodeTest\AndroidApp     REST API client application
+CodeTest\SPA            A prototype SPA
+
 1. Development Environment:
 ==========================
 BackEnd     : MySQL
