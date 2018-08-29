@@ -1,6 +1,8 @@
 package com.inmar.retailstore;
 
 import android.app.AlertDialog;
+import android.app.Fragment;
+import android.app.FragmentManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -17,6 +19,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.inmar.retailstore.adapter.SkuListViewAdapter;
@@ -34,12 +37,11 @@ import java.util.List;
 /**
  * Activity class to show list of SKU.
  */
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements SkuResultsFilterFragment.OnSkuFilterListener {
 
     private static final String TAG = "RestActivity";
 
-    //Connectivity Manager to check network status
-    ConnectivityManager mConnMgr;
+    private static final String FRAGMENT_FILTER = "filter_fragment";
 
     //Listview for SKU items
     private ListView mLvSku;
@@ -50,6 +52,8 @@ public class MainActivity extends AppCompatActivity {
     //Adapter for SKU list
     private SkuListViewAdapter mSkuListAdapter;
 
+    private TextView mTvStatus;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -59,8 +63,7 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        mConnMgr = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-
+        mTvStatus = findViewById(R.id.tv_content);
         mLvSku = (ListView) findViewById(R.id.lv_sku);
         mLvSku.setOnItemLongClickListener(mOnSkuItemLongClickListener);
         mSkuList = new ArrayList<SKU>();
@@ -90,8 +93,15 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+        FragmentManager manager = getFragmentManager();
+        Fragment frag = manager.findFragmentByTag(FRAGMENT_FILTER);
+        if (frag != null) {
+            manager.beginTransaction().remove(frag).commit();
+        }
         int id = item.getItemId();
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_filter_results) {
+            SkuResultsFilterFragment skuResultFragment = new SkuResultsFilterFragment();
+            skuResultFragment.show(manager, FRAGMENT_FILTER);
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -145,7 +155,13 @@ public class MainActivity extends AppCompatActivity {
      * Execute asynchronous task to fetch SKU list from Server
      */
     private void getContent() {
-        new FetchSkuTask().execute();
+        /*
+        if (!isConnected()) {
+            return;
+        }
+        */
+        String params = null;
+        new FetchSkuTask().execute(params);
     }
 
     /**
@@ -161,18 +177,20 @@ public class MainActivity extends AppCompatActivity {
      * @return true if connected, popup a dialog if not.
      */
     private boolean isConnected() {
-        NetworkInfo networkInfo = mConnMgr.getActiveNetworkInfo();
+
+        ConnectivityManager connMgr = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
         if (networkInfo != null && networkInfo.isConnected()) {
             return true;
         } else {
             AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-            builder.setTitle("Alert!");
-            builder.setMessage("Please check your network connection");
+            builder.setTitle("Not connected");
+            builder.setMessage("Please check your network connection and relauch the app");
             builder.setPositiveButton("OK",
                     new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialogInterface, int i) {
-                            finish();
+                            //finish();
                         }
                     });
             builder.create().show();
@@ -183,13 +201,20 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Asynchronous task to fetch SKU list from Server
      */
-    class FetchSkuTask extends AsyncTask<Void, Void, List<SKU>> {
+    class FetchSkuTask extends AsyncTask<String, Void, List<SKU>> {
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            updateStatus(getString(R.string.loading));
+        }
 
         @Override
-        protected List<SKU> doInBackground(Void... voids) {
+        protected List<SKU> doInBackground(String... params) {
 
             String url_locations = "http://192.168.43.45/retail_store/v1/get_sku";
-
+            if (params[0] != null) {
+                url_locations += params[0];
+            }
             String responseData = Util.getServerData(url_locations);
 
             List<SKU> skuList = parseSKUData(responseData);
@@ -202,10 +227,14 @@ public class MainActivity extends AppCompatActivity {
         protected void onPostExecute(List<SKU> skuList) {
             super.onPostExecute(skuList);
             Log.i(TAG, "Task:onPostExecute");
+
             if (skuList != null && !skuList.isEmpty()) {
+                updateStatus("");
                 for (SKU sku : skuList) {
                     Log.i(TAG, sku.toString());
                 }
+            } else {
+                updateStatus(getString(R.string.no_sku_found));
             }
 
             mSkuList.clear();
@@ -343,5 +372,18 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return result;
+    }
+
+    @Override
+    public void onSkuFilter(String urlParam) {
+        Log.d(TAG, "onSkuFilter, urlParam:" + urlParam);
+        new FetchSkuTask().execute(urlParam);
+    }
+
+    private void updateStatus(String message) {
+        if (mTvStatus != null) {
+            mTvStatus.setText(message);
+        }
+
     }
 }

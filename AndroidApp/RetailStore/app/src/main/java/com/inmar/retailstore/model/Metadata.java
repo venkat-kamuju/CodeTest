@@ -21,6 +21,12 @@ public class Metadata {
 
     public String subCategoryName;
 
+    public Metadata(int deptId, int categoryId, int subCategoryId) {
+        this.deptId = deptId;
+        this.categoryId = categoryId;
+        this.subCategoryId = subCategoryId;
+    }
+
     public Metadata(String deptId, String deptName, String categoryId, String categoryName,
                     String subCategoryId, String subCategoryName) {
 
