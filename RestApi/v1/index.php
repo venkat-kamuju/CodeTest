@@ -74,16 +74,16 @@ $app->get('/get_sku',
         $response = array();
 
         //Read arguments from HTTP request
-        $location = $app->request()->params('location');
-        $dept = $app->request()->params('dept');
-        $category = $app->request()->params('category');
-        $sub_category = $app->request()->params('sub_category');
+        $location_id = $app->request()->params('location_id');
+        $dept_id = $app->request()->params('dept_id');
+        $category_id = $app->request()->params('category_id');
+        $sub_category_id = $app->request()->params('sub_category_id');
 
         //Create instance of database helper
         $db = new DbHandler();
 
         //Fetch SKU from database
-        $result = $db->getSKU($location, $dept, $category, $sub_category);
+        $result = $db->getSKU($location_id, $dept_id, $category_id, $sub_category_id);
 
         if (!is_null($result)) {
 

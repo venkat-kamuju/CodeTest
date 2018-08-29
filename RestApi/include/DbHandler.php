@@ -70,7 +70,7 @@ class DbHandler {
      * @param String $sub_category Item sub-category name
      * @return list of sku if available, null otherwise
      */
-    public function getSKU($location, $dept, $category, $sub_category) {
+    public function getSKU($location_id, $dept_id, $category_id, $sub_category_id) {
 
         //Default SQL query to fetch all sku
         $sql_query = "SELECT sku.sku_id, sku.sku_name,
@@ -82,24 +82,32 @@ class DbHandler {
             WHERE sku.location_id = locations.location_id
             AND sku.meta_info_id = sub_categories.sub_category_id
             AND sub_categories.category_id = categories.category_id
-            AND categories.dept_id = departments.dept_id 
-            ORDER BY sku.sku_id";
+            AND categories.dept_id = departments.dept_id ";
 
         //Append additional clauses to sql query if specific records needs to be fetched.
-        if (!is_null($location)) {
-            $sql_query .= " AND locations.location_name LIKE ?";
+        $i = 0;
+        $bindParams = array();
+        if (!is_null($location_id)) {
+            $sql_query .= " AND locations.location_id = ?";
+            $bindParams[$i] = $location_id;
+            $i++;
         }
 
-        if (!is_null($dept)) {
-            $sql_query .= " AND departments.dept_name  LIKE ?";
+        if (!is_null($dept_id)) {
+            $sql_query .= " AND departments.dept_id  = ?";
+            $bindParams[$i] = $dept_id;
+            $i++;
         }
 
-        if (!is_null($category)) {
-            $sql_query .= " AND categories.category_name LIKE ?";
+        if (!is_null($category_id)) {
+            $sql_query .= " AND categories.category_id = ?";
+            $bindParams[$i] = $category_id;
+            $i++;
         }
 
-        if (!is_null($sub_category)) {
-            $sql_query .= " AND sub_categories.sub_category_name LIKE ?";
+        if (!is_null($sub_category_id)) {
+            $sql_query .= " AND sub_categories.sub_category_id = ?";
+            $bindParams[$i] = $sub_category_id;
         }
 
         if (!$this->conn) {
@@ -113,14 +121,14 @@ class DbHandler {
         }
 
         //Bind arugments to SQL Query
-        if (!is_null($sub_category))
-            $stmt->bind_param("ssss", $location, $dept, $category, $sub_category);
-        elseif (!is_null($category))
-            $stmt->bind_param("sss", $location, $dept, $category);
-        elseif (!is_null($dept))
-            $stmt->bind_param("ss", $location, $dept);
-        elseif (!is_null($location))
-            $stmt->bind_param("s", $location);
+        if (count($bindParams) == 4)
+            $stmt->bind_param("iiii", $bindParams[0], $bindParams[1], $bindParams[2], $bindParams[3]);
+        else if (count($bindParams) == 3)
+            $stmt->bind_param("iii", $bindParams[0], $bindParams[1], $bindParams[2]);
+        else if (count($bindParams) == 2)
+            $stmt->bind_param("ii", $bindParams[0], $bindParams[1]);
+        else if (count($bindParams) == 1)
+            $stmt->bind_param("i", $bindParams[0]);        
 
         //Execute SQL Query
         $result = $stmt->execute();
