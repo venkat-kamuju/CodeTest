@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html>
+<html ng-app="spaApp" >
+
     <head>
 
         <title>Inmar Contacts</title>
@@ -8,19 +9,17 @@
 
         <script type="text/javascript" src="js/app.js"></script>
 
-        <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"  ></script>  
+        <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"  ></script>
 
-        <script type="text/javascript" src="https://netdna.bootstrapcdn.com/bootstrap/3.0.2/js/bootstrap.min.js" ></script>   
+        <script type="text/javascript" src="https://netdna.bootstrapcdn.com/bootstrap/3.0.2/js/bootstrap.min.js" ></script>
 
-        <script type="text/javascript" src="js/main.js"></script>
-
-        <link rel="stylesheet" id="themeStyles" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css"/> 
+        <link rel="stylesheet" id="themeStyles" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css"/>
 
         <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css"/>
 
     </head>
 
-<body>
+<body ng-controller="contactsController">
 
     <h3>External Contacts</h3>
 
@@ -32,12 +31,13 @@
 
     <br><br>
 
-    <div id="contacts_table" class="collapse in w3-center" ng-app="spaApp" ng-controller="contactsController" >
+    <div id="contacts_table" class="collapse in w3-center" >
 
     <br><br>
 
         <!-- Table with list of contacts -->
         <table align="center" class="w3-table w3-striped w3-border" style="width:90%" >
+
             <!-- Table Header -->
             <tr class="w3-blue">
                 <th></th>
@@ -62,70 +62,116 @@
         <br>
 
         <div class="w3-center">
-            <button type="button" name="select" 
-                    class="w3-button w3-round-large w3-blue" style="width:30%" 
-                    ng-click="getSelectedContacts('Selected contacts...')" >Select</button>
 
-            <button type="button"  class="w3-button w3-round-large w3-blue" 
-                    style="width:30%" ng-click="getSelectedContacts('Contacts to delete...')" >Delete</button>
+            <!-- Select button -->
+            <button type="button" name="select"
+                    class="w3-button w3-round-large w3-blue" style="width:30%"
+                    ng-click="postSelectedContacts('SELECT')" >Select</button>
 
-            <button type="button"  class="w3-button w3-round-large w3-blue" 
-                    style="width:30%" data-toggle="modal" data-target="#myModal">Add New</button>
+            <!-- Delete button -->
+            <button type="button"  class="w3-button w3-round-large w3-blue"
+                    style="width:30%" ng-click="postSelectedContacts('DELETE')">Delete</button>
+
+            <!-- Add New button -->
+            <button type="button"  class="w3-button w3-round-large w3-blue"
+                    style="width:30%" data-toggle="modal" data-target="#modalDialog">Add New</button>
         </div>
-        <span style="color:Red">{{contact_ids}}</span>
 
     </div>
 
 
     <!-- Modal to insert new contact -->
-    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal fade" id="modalDialog" tabindex="-1" role="dialog" aria-labelledby="modalDialogLabel" aria-hidden="true">
 
         <div class="modal-dialog">
 
             <div class="modal-content">
 
+                <!-- Dialog Header -->
                 <div class="modal-header">
+
+                    <!-- Close icon in header -->
                     <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                    <h4 class="modal-title" id="myModalLabel">Add Contact</h4>
+
+                    <!-- Dialog title -->
+                    <h4 class="modal-title" id="modalDialogLabel">Add Contact</h4>
                 </div>
 
+                <!-- Dialog Body -->
                 <div class="modal-body">
-                    <form name="add_contact_form">
+
+                    <!-- Form to submit -->
+                    <form name="add_contact_form" ng-submit="submitAddContactForm();" >
                         <table align="center" class="w3-table">
 
+                            <!-- Contact Type -->
                             <tr>
                                 <td>Type:</td>
-                                <td> 
-                                    <select>
+                                <td>
+                                    <select class="form-control" id="contact_type" name="contact_type">
                                       <option value="1">Official</option>
                                       <option value="2">Personal</option>
                                     </select>
                                 </td>
                             </tr>
+
+                            <!-- Contact Name -->
                             <tr>
                                 <td>Name:</td>
-                                <td><input type="text" id="name" required></td>
+                                <td><input type="text" class="form-control" id="contact_name" name="contact_name" required></td>
                             </tr>
+
+                            <!-- Contact Title -->
                             <tr>
                                 <td>Title:</td>
-                                <td><input type="text" id="title" required></td>
+                                <td><input type="text" class="form-control" id="contact_title" name="contact_title" required></td>
                             </tr>
+
+                            <!-- Contact Phone -->
                             <tr>
                                 <td>Phone:</td>
-                                <td><input id="phone" type="text" required></td>
+                                <td>
+                                    <input type="text" class="form-control"  maxlength="10" required
+                                        id="contact_phone" name="contact_phone"
+                                        ng-pattern="/^[1-9][0-9]{9}$/" ng-model="contact_phone" />
+                                    <span style="color:red"
+                                        ng-show="add_contact_form.contact_phone.$dirty && add_contact_form.contact_phone.$invalid"
+                                        class="ng-hide">
+                                            Please enter valid  phone number
+                                    </span>
+                                </td>
                             </tr>
+
+                            <!-- Contact E-Mail -->
                             <tr>
                                 <td>E-mail:</td>
-                                <td><input type="email" id="emailId" name="email" ng-model="email" required></td>
-                            </tr>
+                                <td>
+                                    <input type="text" class="form-control" maxlength="100"
+                                        id="contact_email" name="contact_email"
+                                        required ng-pattern="/^\w+@[a-zA-Z_]+?\.[a-zA-Z]{2,3}$/"
+                                        ng-model="contact_email" />
+                                    <span style="color:red"
+                                        ng-show="add_contact_form.contact_email.$dirty && add_contact_form.contact_email.$invalid"
+                                        class="ng-hide">
+                                        Please enter valid  email
+                                    </span>
+                                </td>
+                           </tr>
+
                         </table>
-                    </div>
+
+                    </div>  <!-- modal-body -->
 
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-default" data-dismiss="modal" style="width:20%">Close</button>
-                        <button type="submit" type="submit" class="btn btn-primary" style="width:20%">Add</button>
+
+                        <button type="button" class="btn btn-default" data-dismiss="modal"
+                                style="width:20%">Close</button>
+
+                        <button type="submit" class="btn btn-primary" id="add_button"
+                                style="width:20%" >Add</button>
+
                     </div>
-                
+
                 </form>
 
             </div><!-- /.modal-content -->
@@ -133,5 +179,7 @@
         </div><!-- /.modal-dialog -->
 
     </div><!-- /.modal -->
+
 </body>
+
 </html>
