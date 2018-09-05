@@ -1,5 +1,6 @@
 package com.inmar.retailstore;
 
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -50,11 +51,19 @@ public class InsertSkuActivity extends AppCompatActivity {
     private List<String> mCategoryList = new ArrayList<>();
     private List<String> mSubCategoryList = new ArrayList<>();
 
+    private String mApiKey;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_insert_sku);
+
+        Intent intent = getIntent();
+        if (intent != null) {
+            mApiKey = intent.getStringExtra(Constants.INTENT_EXTRA_API_KEY);
+            Log.i(TAG, "Api Key:" + mApiKey);
+        }
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -179,7 +188,7 @@ public class InsertSkuActivity extends AppCompatActivity {
         protected Boolean doInBackground(Void... voids) {
 
             //Get locations from REST API
-            String url_locations = "http://192.168.43.45/retail_store/v1/get_locations";
+            String url_locations = Constants.BASE_URL + "/get_locations";
 
             String responseLocations = Util.getServerData(url_locations);
 
@@ -187,7 +196,7 @@ public class InsertSkuActivity extends AppCompatActivity {
             Log.i(TAG, "Locations count:" + mLocationsMap.size());
 
             //Get metadata from REST API
-            String url_metadata = "http://192.168.43.45/retail_store/v1/get_metadata";
+            String url_metadata = Constants.BASE_URL + "/get_metadata";
 
             String responseMetadata = Util.getServerData(url_metadata);
 
@@ -236,9 +245,9 @@ public class InsertSkuActivity extends AppCompatActivity {
         protected Integer doInBackground(String... jsonStrings) {
 
             //Get locations from REST API
-            String url_locations = "http://192.168.43.45/retail_store/v1/insert_sku";
+            String url_locations = Constants.BASE_URL + "/insert_sku";
 
-            String responseData = Util.postServerData(url_locations, jsonStrings[0]);
+            String responseData = Util.postServerData(url_locations, jsonStrings[0], mApiKey);
 
             int result = parseInsertSkuResponse(responseData);
 

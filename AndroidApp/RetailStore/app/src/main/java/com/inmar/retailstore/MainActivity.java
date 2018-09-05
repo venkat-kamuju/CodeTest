@@ -54,11 +54,19 @@ public class MainActivity extends AppCompatActivity implements SkuResultsFilterF
 
     private TextView mTvStatus;
 
+    private String mApiKey;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_main);
+
+        Intent intent = getIntent();
+        if (intent != null) {
+            mApiKey = intent.getStringExtra(Constants.INTENT_EXTRA_API_KEY);
+            Log.i(TAG, "Api Key:" + mApiKey);
+        }
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -74,6 +82,7 @@ public class MainActivity extends AppCompatActivity implements SkuResultsFilterF
             @Override
             public void onClick(View view) {
                 Intent intent = new Intent(MainActivity.this, InsertSkuActivity.class);
+                intent.putExtra(Constants.INTENT_EXTRA_API_KEY, mApiKey);
                 startActivity(intent);
             }
         });
@@ -211,11 +220,11 @@ public class MainActivity extends AppCompatActivity implements SkuResultsFilterF
         @Override
         protected List<SKU> doInBackground(String... params) {
 
-            String url_locations = "http://192.168.43.45/retail_store/v1/get_sku";
+            String url_locations = Constants.BASE_URL + "/get_sku";
             if (params[0] != null) {
                 url_locations += params[0];
             }
-            String responseData = Util.getServerData(url_locations);
+            String responseData = Util.getServerData(url_locations, mApiKey);
 
             List<SKU> skuList = parseSKUData(responseData);
             Log.i(TAG, "SKU count:" + skuList.size());
@@ -254,9 +263,9 @@ public class MainActivity extends AppCompatActivity implements SkuResultsFilterF
         @Override
         protected Boolean doInBackground(Integer... sku_id) {
 
-            String deleteUrl = "http://192.168.43.45/retail_store/v1/delete_sku/" + sku_id[0] ;
+            String deleteUrl = Constants.BASE_URL + "/delete_sku/" + sku_id[0] ;
 
-            String responseData = Util.deleteServerData(deleteUrl);
+            String responseData = Util.deleteServerData(deleteUrl, mApiKey);
 
             return parseDeleteSkuResponse(responseData);
 

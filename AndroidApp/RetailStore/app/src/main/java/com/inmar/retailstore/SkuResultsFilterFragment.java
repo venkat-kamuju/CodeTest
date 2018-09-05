@@ -170,7 +170,7 @@ public class SkuResultsFilterFragment extends DialogFragment{
         protected Boolean doInBackground(Void... voids) {
 
             //Get locations from REST API
-            String url_locations = "http://192.168.43.45/retail_store/v1/get_locations";
+            String url_locations = Constants.BASE_URL + "/get_locations";
 
             String responseLocations = Util.getServerData(url_locations);
 
@@ -178,7 +178,7 @@ public class SkuResultsFilterFragment extends DialogFragment{
             Log.i(TAG, "Locations count:" + mLocationsMap.size());
 
             //Get metadata from REST API
-            String url_metadata = "http://192.168.43.45/retail_store/v1/get_metadata";
+            String url_metadata = Constants.BASE_URL + "/get_metadata";
 
             String responseMetadata = Util.getServerData(url_metadata);
 

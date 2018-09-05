@@ -23,9 +23,10 @@ public class Util {
     /**
      * Function to fetch data from REST API.
      * @param urlString
+     * @param apiKey Authorization key
      * @return response data from Server in JSON format
      */
-    public static String getServerData(String urlString) {
+    public static String getServerData(String urlString, String apiKey) {
 
         Log.i(TAG, "getServerData");
 
@@ -42,6 +43,7 @@ public class Util {
             URL url = new URL(urlString);
 
             HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
+            httpURLConnection.setRequestProperty ("Authorization", apiKey);
 
             if (httpURLConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
 
@@ -68,12 +70,22 @@ public class Util {
     }
 
     /**
+     * Function to fetch data from REST API.
+     * @param urlString
+     * @return response data from Server in JSON format
+     */
+    public static String getServerData(String urlString) {
+        return getServerData(urlString, null);
+    }
+
+    /**
      * Function to post/insert new data to Server
      * @param urlString     URL
      * @param paramString   Parameters to post
+     * @param apiKey Authorization key
      * @return Response from server in JSON format
      */
-    public static String postServerData(String urlString, String paramString) {
+    public static String postServerData(String urlString, String paramString, String apiKey) {
 
         Log.i(TAG, "postServerData: url=" + urlString + ", Params:" + paramString);
 
@@ -90,6 +102,7 @@ public class Util {
             HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
             urlConnection.setRequestMethod("POST");
             urlConnection.setRequestProperty("Accept-Charset", "UTF-8");
+            urlConnection.setRequestProperty ("Authorization", apiKey);
             urlConnection.setRequestProperty("Accept", "application/json");
             urlConnection.setDoInput(true);
             urlConnection.setDoOutput(true);
@@ -101,8 +114,10 @@ public class Util {
             printout.flush ();
             printout.close ();
 
-            if (urlConnection.getResponseCode() == HttpURLConnection.HTTP_CREATED) {
-                Log.i(TAG, "Record inserted");
+            int responseCode = urlConnection.getResponseCode();
+            Log.i(TAG, "Response Code:" + responseCode);
+            if (responseCode == HttpURLConnection.HTTP_CREATED || responseCode == HttpURLConnection.HTTP_OK) {
+                Log.i(TAG, "Success");
                 InputStream responseBody = urlConnection.getInputStream();
                 responseData = getStringFromInputStream(responseBody);
             } else {
@@ -119,15 +134,24 @@ public class Util {
 
         return responseData;
     }
+    /**
+     * Function to post/insert new data to Server
+     * @param urlString     URL
+     * @param paramString   Parameters to post
+     * @return Response from server in JSON format
+     */
+    public static String postServerData(String urlString, String paramString) {
+        return postServerData(urlString, paramString, null);
+    }
 
     /**
      * Delete data on server
      * @param urlString URL to delete record
      * @return Response from server in JSON format
      */
-    public static String deleteServerData(String urlString) {
+    public static String deleteServerData(String urlString, String apiKey) {
 
-        Log.i(TAG, "postServerData: url=" + urlString);
+        Log.i(TAG, "postServerData: url=" + urlString + ", key:" + apiKey);
 
         if (urlString == null || urlString.isEmpty()) {
             Log.e(TAG, "Bad arguments");
@@ -142,6 +166,7 @@ public class Util {
             URL url = new URL(urlString);
             HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
             urlConnection.setRequestMethod("DELETE");
+            urlConnection.setRequestProperty ("Authorization", apiKey);
             urlConnection.setRequestProperty("Accept", "application/json");
             urlConnection.setDoOutput(true);
             urlConnection.connect();
