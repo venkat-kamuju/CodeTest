@@ -11,6 +11,7 @@
 //Include dependency classes
 require_once '../include/DbHandler.php';
 require_once '../include/Constants.php';
+require_once '../include/Config.php';
 require '.././libs/Slim/Slim.php';
 
 //Register Slim’s built-in autoloader
@@ -20,22 +21,104 @@ require '.././libs/Slim/Slim.php';
 $app = new \Slim\Slim();
 
 /**
+ * User Registration
+ * url - /register
+ * method - POST
+ * params - name, email, password
+ */
+$app->post('/register', function() use ($app) {
+
+            // check for required params
+            verify_required_params(array('name', 'email', 'password'));
+
+            $response = array();
+
+            // reading post params
+            $name = $app->request->post('name');
+            $email = $app->request->post('email');
+            $password = $app->request->post('password');
+
+            // validating email address
+            validateEmail($email);
+
+            $db = new DbHandler();
+            $result = $db->createUser($name, $email, $password);
+
+            $response[RESULT_CODE_KEY] = $result;
+            if ($result == RESULT_CODE_SUCCESS) {
+                $response[RESULT_DESCRIPTION_KEY] = "User registered successfully";
+            } else if ($result == RESULT_CODE_FAILURE) {
+                $response[RESULT_DESCRIPTION_KEY] = "An error occurred while registering user";
+            } else if ($result == RESULT_CODE_ALREADY_EXISTS) {
+                $response[RESULT_DESCRIPTION_KEY] = "User already exist";
+            }
+
+            // echo json response
+            echoRespnse(Constants::HTTP_CREATED, $response);
+        });
+
+/**
+ * User Login
+ * url - /login
+ * method - POST
+ * params - email, password
+ */
+$app->post('/login', function() use ($app) {
+
+            // check for required params
+            verify_required_params(array('email', 'password'));
+
+            // reading post params
+            $email = $app->request()->post('email');
+            $password = $app->request()->post('password');
+            $response = array();
+
+            $db = new DbHandler();
+            
+            // check for correct email and password
+            if ($db->checkLogin($email, $password)) {
+            
+                // get the user by email
+                $user = $db->getUserByEmail($email);
+
+                if ($user != NULL) {
+                    $response[RESULT_CODE_KEY] = RESULT_CODE_SUCCESS;
+                    $response['name'] = $user['name'];
+                    $response['email'] = $user['email'];
+                    $response['api_key'] = $user['api_key'];
+                } else {
+                    // unknown error occurred
+                    $response[RESULT_CODE_KEY] = RESULT_CODE_FAILURE;
+                    $response[RESULT_DESCRIPTION_KEY] = "An error occurred. Please try again";
+                }
+            } else {
+                // user credentials are wrong
+                $response[RESULT_CODE_KEY] = RESULT_CODE_FAILURE;
+                $response[RESULT_DESCRIPTION_KEY] = 'Login failed. Incorrect credentials';
+            }
+
+            echoRespnse(Constants::HTTP_OK, $response);
+        });
+
+/**
  * Insert SKU
  * url - /insert
  * method - POST
  * params from body of HTTP request- sku_name, location_id, meta_info_id.
  * return - JSON array with result code and result description
  */
-$app->post('/insert_sku',
+$app->post('/insert_sku', 'authenticate', 
     function() use ($app) {
+
+        // check for required params
+        verify_required_params(array('sku_name', 'location_id', 'meta_info_id'));
+
+        $sku_name = $app->request()->post('sku_name');
+        $location_id = $app->request()->post('location_id');
+        $meta_info_id = $app->request()->post('meta_info_id');
 
         //Prepare output to return to the caller
         $response = array();
-
-        $sku_name = $app->request()->params('sku_name');
-        $location_id = $app->request()->params('location_id');
-        $meta_info_id = $app->request()->params('meta_info_id');
-
 
         //Create instance of Database helper
         $db = new DbHandler();
@@ -67,7 +150,7 @@ $app->post('/insert_sku',
  * params from url- location, department, category and sub-category.
  * return - JSON array with result code and result description
  */
-$app->get('/get_sku',
+$app->get('/get_sku', 'authenticate', 
     function () use ($app)  {
 
         //Prepare a result array
@@ -123,7 +206,7 @@ $app->get('/get_sku',
  * params task, status
  * url - /update/:sku_id
  */
-$app->put('/update_sku/:sku_id',
+$app->put('/update_sku/:sku_id', 'authenticate', 
     function($sku_id) use($app) {
 
             //check for required params
@@ -156,8 +239,13 @@ $app->put('/update_sku/:sku_id',
  * method DELETE
  * url /delete
  */
-$app->delete('/delete_sku/:sku_id',
+$app->delete('/delete_sku/:sku_id', 'authenticate', 
     function($sku_id) use($app) {
+
+        //Check for valid input
+        if (!isset($sku_id) || strlen(trim($sku_id)) <= 0) {
+            echoErrorRespnse();
+        }
 
         $db = new DbHandler();
 
@@ -268,6 +356,51 @@ $app->get('/get_metadata',
 
 
 /**
+ * Authenticate every API request to process
+ * Checking if the request has valid api key in the 'Authorization' header
+ */
+function authenticate(\Slim\Route $route) {
+
+    // Getting request headers
+    $headers = apache_request_headers();
+
+    $response = array();
+
+    $app = \Slim\Slim::getInstance();
+
+    // Verifying Authorization Header
+    if (isset($headers['Authorization'])) {
+
+        $db = new DbHandler();
+
+        // get the api key
+        $api_key = $headers['Authorization'];
+
+        // validating api key
+        if (!$db->isValidApiKey($api_key)) {
+
+            // api key is not present in users table
+            $response[RESULT_CODE_KEY] = RESULT_CODE_FAILURE;
+            $response[RESULT_DESCRIPTION_KEY] = 'Access Denied. Invalid Api key';
+            echoRespnse(401, $response);
+            $app->stop();
+
+        } else {
+            //global $user_id;
+            //$user_id = $db->getUserId($api_key);
+        }
+
+    } else {
+        // api key is missing in header
+        $response[RESULT_CODE_KEY] = RESULT_CODE_FAILURE;
+        $response[RESULT_DESCRIPTION_KEY] = 'Api key is misssing';
+        echoRespnse(400, $response);
+        $app->stop();
+    }
+}
+
+
+/**
  * Echoing json response to client
  * @param String $status_code Http response code
  * @param Int $response Json response
@@ -308,35 +441,58 @@ function echoErrorRespnse() {
  * Verifying required params posted or not
  */
 function verify_required_params($required_fields) {
+    
     $error = false;
     $error_fields = "";
+    
     $request_params = array();
     $request_params = $_REQUEST;
-
+    
     // Handling PUT request params
-    if ($_SERVER['REQUEST_METHOD'] == 'PUT' || $_SERVER['REQUEST_METHOD'] == 'POST') {
+    if ($_SERVER['REQUEST_METHOD'] == 'PUT') {
         $app = \Slim\Slim::getInstance();
         parse_str($app->request()->getBody(), $request_params);
     }
-
+    
     foreach ($required_fields as $field) {
+        
         if (!isset($request_params[$field]) || strlen(trim($request_params[$field])) <= 0) {
             $error = true;
             $error_fields .= $field . ', ';
         }
+    
     }
 
     if ($error) {
+
         // Required field(s) are missing or empty
-        // echo error json and stop the app
         $response = array();
         $app = \Slim\Slim::getInstance();
-        $response["error"] = true;
-        $response["message"] = 'Required field(s) ' . substr($error_fields, 0, -2) . ' is missing or empty';
+        $response[RESULT_CODE_KEY] = RESULT_CODE_FAILURE;
+        $response[RESULT_DESCRIPTION_KEY] = 'Required field(s) ' . substr($error_fields, 0, -2) . ' is missing or empty';
+
+        // echo error json and stop the app
         echoRespnse(400, $response);
         $app->stop();
     }
 }
+
+/**
+ * Validating email address
+ */
+function validateEmail($email) {
+
+    $app = \Slim\Slim::getInstance();
+
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $response[RESULT_CODE_KEY] = RESULT_CODE_FAILURE;
+        $response[RESULT_DESCRIPTION_KEY] = 'Email address is not valid';
+        $response["email"] = $email;
+        echoRespnse(400, $response);
+        $app->stop();
+    }
+}
+
 
 // Run application
 $app->run();

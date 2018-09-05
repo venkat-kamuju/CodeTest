@@ -6,6 +6,13 @@
  * @author Naga Venkat Kamuju
  */
 
+define('RESULT_CODE_KEY', 'ResultCode');
+define('RESULT_DESCRIPTION_KEY', 'ResultDescription');
+
+define('RESULT_CODE_SUCCESS', 0);
+define('RESULT_CODE_FAILURE', 1);
+define('RESULT_CODE_ALREADY_EXISTS', 2);
+
 class Constants
 {
   // [Successful 2xx]

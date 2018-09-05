@@ -3,6 +3,17 @@ CREATE DATABASE retail_store
 USE  RETAIL_STORE
 
 
+CREATE TABLE users (
+  id int NOT NULL AUTO_INCREMENT,
+  name varchar(250) DEFAULT NULL,
+  email varchar(255) NOT NULL,
+  password_hash text NOT NULL,
+  api_key varchar(32) NOT NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY email (email)
+  );
+  
+
 CREATE TABLE locations (
     location_id int NOT NULL  AUTO_INCREMENT,
     location_name varchar(100) NOT NULL,
